@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Колір, що змінив історію</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Literata:wght@300;400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#E6E3DA;
+  --ink:#1E1C19;
+  --ink-soft:#5A564F;
+  --gold:#B08A34;
+  --f-display:"Cormorant Garamond", "Cormorant", Georgia, "Times New Roman", serif;
+  --f-body:"Literata", Georgia, "Times New Roman", serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --chrome:var(--ink);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --paper:#1C1A17; --ink:#ECE6D9; --ink-soft:#A8A193; --gold:#D2AE55; }
+}
+:root[data-theme="dark"]{ --paper:#1C1A17; --ink:#ECE6D9; --ink-soft:#A8A193; --gold:#D2AE55; }
+
+*,*::before,*::after{box-sizing:border-box}
+html{height:100%; scroll-padding-top:env(safe-area-inset-top,0px)}
+body{height:100%; margin:0; background:var(--paper); color:var(--ink); font-family:var(--f-body); overflow:hidden; -webkit-font-smoothing:antialiased}
+
+.deck{position:relative; height:100%; width:100%; overflow:hidden}
+
+/* ---------- slide base ---------- */
+.slide{
+  position:absolute; inset:0;
+  display:grid; grid-template-columns:minmax(0,43rem) minmax(0,27rem);
+  justify-content:center; align-items:center; gap:clamp(1.5rem,3vw,3rem);
+  padding:clamp(4.5rem,9vh,6.5rem) clamp(1.5rem,7vw,7rem) clamp(5.5rem,11vh,7.5rem);
+  color:var(--fg);
+  opacity:0; visibility:hidden; z-index:1;
+  transition:opacity .45s ease .75s, visibility 0s 1.2s;
+  overflow-y:auto;
+}
+.slide::before{
+  content:""; position:absolute; inset:0; z-index:-1;
+  background:var(--bg);
+  clip-path:circle(0% at 12% 88%);
+  transition:clip-path 1.15s cubic-bezier(.6,.05,.3,1);
+}
+.slide.active{opacity:1; visibility:visible; z-index:2; transition:opacity 0s, visibility 0s}
+.slide.active::before{clip-path:circle(150% at 12% 88%)}
+
+.slide .text, .slide .art-wrap{opacity:0; transition:opacity .25s ease}
+.slide.active .text{opacity:1; transition:opacity .7s ease .55s}
+.slide.active .art-wrap{opacity:1; transition:opacity .4s ease .7s}
+
+/* slide kinds */
+.neutral{--bg:var(--paper); --fg:var(--ink); --line:var(--ink)}
+.story{--bg:var(--pig); --fg:#F3EDE2; --line:#F3EDE2}
+.story.light-pig{--fg:#132B1B; --line:#132B1B}
+.fact{--bg:var(--paper); --fg:var(--ink); --line:var(--pf)}
+.fact{--pf:color-mix(in srgb, var(--pig) var(--pk,100%), #000)}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .fact{--pf:color-mix(in srgb, var(--pig) 50%, #fff)}
+}
+:root[data-theme="dark"] .fact{--pf:color-mix(in srgb, var(--pig) 50%, #fff)}
+.void{--bg:#000; --fg:#DCD7CD; --line:#DCD7CD}
+
+/* ---------- typography ---------- */
+.era{
+  font-family:var(--f-display); font-style:italic; font-size:clamp(1.1rem,1.6vw,1.45rem);
+  margin:0 0 .6rem; opacity:.8;
+}
+h1,h2{font-family:var(--f-display); font-weight:500; margin:0; line-height:.98; letter-spacing:-.01em}
+h1{font-size:clamp(3rem,8vw,7.2rem)}
+h2{font-size:clamp(2.6rem,6.4vw,5.8rem)}
+.fact h2{color:var(--pf); font-style:italic; font-weight:400}
+.lead{
+  font-family:var(--f-display); font-size:clamp(2rem,4.4vw,4rem); line-height:1.08; font-weight:500; margin:0; max-width:22ch;
+}
+p{
+  font-size:clamp(1rem,1.35vw,1.22rem); line-height:1.62; font-weight:300;
+  max-width:50ch; margin:1.1rem 0 0;
+}
+.text > p:first-of-type{margin-top:1.6rem}
+.hook{font-family:var(--f-display); font-style:italic; font-size:clamp(1.3rem,2vw,1.75rem); line-height:1.2; margin:.7rem 0 0; opacity:.9}
+.text > p.hook{margin-top:.7rem}
+.text > h1 + p, .text > h2 + p:not(.hook), .text > .hook + p, .text > .lead + p{margin-top:1.4rem}
+.aside{font-size:clamp(.88rem,1.1vw,1rem); opacity:.72}
+.plate .note{opacity:.6}
+.coda{font-family:var(--f-display); font-style:italic; font-size:clamp(1.3rem,2vw,1.8rem); font-weight:400; opacity:.85}
+.hint{font-family:var(--f-mono); font-size:.8rem; opacity:.6; margin-top:2.5rem}
+
+h1,h2,.lead{text-wrap:balance}
+p{text-wrap:pretty}
+
+/* композиція: факти дзеркальні, обкладинка й фінал по центру */
+.fact{grid-template-columns:minmax(0,27rem) minmax(0,43rem)}
+.fact .art-wrap{order:-1; justify-content:flex-end}
+.slide.center{grid-template-columns:minmax(0,1fr); justify-content:stretch; justify-items:center; align-content:center; text-align:center; gap:clamp(1.2rem,3vh,2.5rem)}
+.slide.center .art-wrap{order:-1; justify-content:center}
+.slide.center .art{max-width:none; width:auto; height:min(32vh,380px)}
+.slide.center p, .slide.center .lead{margin-left:auto; margin-right:auto}
+.slide.center .lead{max-width:22ch}
+
+/* specimen label */
+.plate{
+  margin-top:2rem; display:inline-grid; grid-template-columns:auto auto; gap:.3rem 1.4rem;
+  font-family:var(--f-mono); font-size:clamp(.72rem,.85vw,.82rem); line-height:1.45;
+  border:1px solid color-mix(in srgb, currentColor 45%, transparent);
+  padding:.9rem 1.1rem; max-width:100%;
+}
+.plate dt{opacity:.6}
+.plate dd{margin:0}
+.plate .sw{display:inline-block; width:.8em; height:.8em; background:var(--pig); vertical-align:-.05em; margin-right:.45em; outline:1px solid currentColor; outline-offset:1px}
+.story .plate .sw{display:none}
+
+/* ---------- art ---------- */
+.art-wrap{display:flex; align-items:center; justify-content:flex-start; min-width:0}
+.art{width:100%; max-width:480px; height:auto; aspect-ratio:1/1; overflow:visible}
+.art .s{fill:none; stroke:var(--line); stroke-width:1.4; stroke-linecap:round; stroke-linejoin:round}
+.art .s.thin{stroke-width:.8; opacity:.55}
+.art .f{stroke:none; opacity:0; transition:opacity .8s ease}
+.slide.active .art .f{opacity:1; transition-delay:1.4s}
+.art .draw{stroke-dasharray:1; stroke-dashoffset:1; transition:stroke-dashoffset 0s .9s}
+.slide.active .art .draw{stroke-dashoffset:0; transition:stroke-dashoffset 1.8s cubic-bezier(.5,0,.2,1) .75s}
+.art text{font-family:var(--f-mono); font-size:11px; fill:var(--fg)}
+
+/* ---------- chrome ---------- */
+.top{
+  position:fixed; left:0; right:0; top:0; z-index:10;
+  padding:calc(env(safe-area-inset-top,0px) + 1.4rem) clamp(1.5rem,7vw,7rem) 0;
+  display:flex; justify-content:space-between; align-items:baseline;
+  color:var(--chrome); transition:color .6s ease .3s; pointer-events:none;
+}
+.top .t{font-family:var(--f-display); font-style:italic; font-size:1.05rem}
+.top .n{font-family:var(--f-mono); font-size:.8rem; font-variant-numeric:tabular-nums}
+.bottom{
+  position:fixed; left:0; right:0; bottom:0; z-index:10;
+  padding:0 clamp(1.5rem,7vw,7rem) calc(env(safe-area-inset-bottom,0px) + 1.4rem);
+  display:flex; align-items:center; gap:1.2rem; color:var(--chrome); transition:color .6s ease .3s;
+}
+.bar{flex:1; display:flex; gap:3px; height:10px; align-items:center}
+.bar button{
+  flex:1; height:6px; border:0; padding:0; cursor:pointer; background:transparent;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb, currentColor 35%, transparent);
+  transition:background .6s ease, height .3s ease;
+}
+.bar button.done{background:var(--c); box-shadow:inset 0 0 0 1px color-mix(in srgb, currentColor 25%, transparent)}
+.bar button.cur{height:10px}
+.nav{display:flex; gap:.4rem}
+.nav button{
+  width:2.6rem; height:2.6rem; border:1px solid color-mix(in srgb, currentColor 45%, transparent);
+  background:transparent; color:inherit; cursor:pointer; font-family:var(--f-display); font-size:1.3rem; line-height:1;
+  display:grid; place-items:center;
+}
+.fs-close{display:none}
+:root.is-fs .fs-open{display:none}
+:root.is-fs .fs-close{display:inline}
+.nav button:disabled{opacity:.3; cursor:default}
+button:focus-visible{outline:2px solid currentColor; outline-offset:3px}
+
+/* ---------- mobile ---------- */
+@media (max-width:760px){
+  .slide{
+    grid-template-columns:1fr; grid-template-rows:auto auto; align-content:center;
+    gap:1.4rem; padding:4.6rem 1.4rem 6rem;
+  }
+  .art-wrap, .fact .art-wrap{order:-1; justify-content:center}
+  .art{max-width:none; width:auto; height:30vh}
+  p{max-width:none}
+  .plate{margin-top:1.4rem}
+  .top .t{font-size:.95rem}
+}
+@media (max-height:520px) and (min-width:761px){
+  .art{max-height:60vh; width:auto}
+}
+
+@media (prefers-reduced-motion: reduce){
+  .slide, .slide::before, .slide .text, .slide .art-wrap, .art .f, .art .draw{transition:none !important}
+  .slide::before{clip-path:none}
+  .art .draw{stroke-dashoffset:0}
+  .art .f{opacity:1}
+}
+</style>
+</head>
+<body>
+
+<header class="top" aria-hidden="true">
+  <span class="t">Колір, що змінив історію</span>
+  <span class="n" id="count"></span>
+</header>
+
+<main class="deck" id="deck">
+
+<!-- 1. Обкладинка -->
+<section class="slide neutral center" data-c="var(--ink)" aria-label="Обкладинка">
+  <div class="text">
+    <h1>Колір, що змінив історію</h1>
+    <p>Від морських молюсків до нанотрубок: чого коштував колір і як його навчилися створювати.</p>
+    <p class="hint">Гортайте стрілками, пробілом або свайпом</p>
+  </div>
+  <div class="art-wrap">
+    <svg class="art" viewBox="0 0 400 400" aria-hidden="true">
+      <rect class="s draw" x="30" y="60" width="340" height="280"/>
+      <rect class="f" x="52"  y="84" width="30" height="200" fill="#66023C"/>
+      <rect class="f" x="92"  y="84" width="30" height="200" fill="#26358F"/>
+      <rect class="f" x="132" y="84" width="30" height="200" fill="#8F4B28"/>
+      <rect class="f" x="172" y="84" width="30" height="200" fill="#003153"/>
+      <rect class="f" x="212" y="84" width="30" height="200" fill="#50C878"/>
+      <rect class="f" x="252" y="84" width="30" height="200" fill="#8D4585"/>
+      <rect class="f" x="292" y="84" width="30" height="200" fill="#000000"/>
+      <rect class="f" x="332" y="84" width="30" height="200" fill="#2E5090"/>
+      <path class="s thin draw" d="M52 300 H362"/>
+      <text x="62" y="322">1</text><text x="102" y="322">2</text><text x="142" y="322">3</text><text x="182" y="322">4</text>
+      <text x="222" y="322">5</text><text x="262" y="322">6</text><text x="302" y="322">7</text><text x="342" y="322">8</text>
+    </svg>
+  </div>
+</section>
+
+<!-- 2. Вступ -->
+<section class="slide neutral" data-c="var(--ink)" aria-label="Вступ">
+  <div class="text">
+    <p class="lead">Колись яскравий колір був рідкістю.</p>
+    <p>Його шукали в морі, у горах і навіть у гробницях. Згодом його навчилися створювати в лабораторіях.</p>
+  </div>
+  <div class="art-wrap">
+    <svg class="art" viewBox="0 0 400 400" aria-hidden="true">
+      <path class="s draw" d="M80 190 H320"/>
+      <path class="s draw" d="M92 190 Q104 300 200 306 Q296 300 308 190"/>
+      <path class="s draw" d="M160 302 L148 340 H252 L240 302"/>
+      <path class="s draw" d="M226 206 L306 74 Q318 60 331 69 Q342 81 331 94 L246 216"/>
+      <path class="s thin draw" d="M130 230 Q200 246 272 230"/>
+      <path class="s thin draw" d="M146 262 Q200 274 256 262"/>
+      <circle class="f" cx="170" cy="208" r="3" fill="#66023C"/>
+      <circle class="f" cx="186" cy="214" r="2.5" fill="#26358F"/>
+      <circle class="f" cx="205" cy="209" r="3" fill="#8F4B28"/>
+      <circle class="f" cx="160" cy="220" r="2" fill="#003153"/>
+      <circle class="f" cx="198" cy="222" r="2" fill="#8D4585"/>
+    </svg>
+  </div>
+</section>
+
+<!-- 3. Тирський пурпур -->
+<section class="slide story" style="--pig:#66023C" data-c="#66023C" aria-label="Тирський пурпур">
+  <div class="text">
+    <h2>Тирський пурпур</h2>
+    <p class="hook">Колір, що позначав статус</p>
+    <p>Барвник отримували із залоз кількох видів морських молюсків. У Римській імперії пурпур став символом влади, а його використання регулювали закони.</p>
+    <dl class="plate">
+      <dt>Зразок</dt><dd>№ 1, Tyrian purple</dd>
+      <dt>Період</dt><dd>з бронзової доби</dd>
+      <dt>Джерело</dt><dd>залози молюсків-мурексів</dd>
+      <dt>HEX</dt><dd><span class="sw"></span>#66023C <span class="note">цифровий орієнтир</span></dd>
+    </dl>
+  </div>
+  <div class="art-wrap">
+    <svg class="art" viewBox="0 0 400 400" aria-hidden="true">
+      <path class="s draw" d="M200 70 C260 110 290 170 270 240 C255 290 220 320 200 350 C180 320 145 290 130 240 C110 170 140 110 200 70 Z"/>
+      <path class="s draw" d="M200 350 L200 388"/>
+      <path class="s draw" d="M200 118 C226 170 228 250 200 318"/>
+      <path class="s thin draw" d="M140 150 Q200 176 262 150"/>
+      <path class="s thin draw" d="M131 215 Q200 246 272 215"/>
+      <path class="s thin draw" d="M150 280 Q200 305 252 280"/>
+      <path class="s draw" d="M200 70 L200 38 M140 150 L104 132 M131 215 L90 210 M150 280 L116 294 M262 150 L298 132 M272 215 L312 210 M252 280 L286 294"/>
+      <path class="s thin draw" d="M104 132 L112 142 M90 210 L100 216 M298 132 L290 142 M312 210 L302 216"/>
+    </svg>
+  </div>
+</section>
+
+<!-- 4. Пурпур: факт -->
+<section class="slide fact" style="--pig:#66023C" data-c="#66023C" aria-label="Пурпур, факт">
+  <div class="text">
+    <h2>До 12 000 молюсків</h2>
+    <p>Стільки могло знадобитися на один грам барвника. Точна кількість залежала від виду молюска та способу виробництва.</p>
+  </div>
+  <div class="art-wrap">
+    <svg class="art" viewBox="0 0 400 400" aria-hidden="true">
+      <g id="dotgrid"></g>
+      <path class="s draw" d="M262 180 H306 M296 171 L306 180 L296 189"/>
+      <path class="s draw" d="M344 146 C360 172 368 188 368 202 A24 24 0 0 1 320 202 C320 188 328 172 344 146 Z"/>
+      <path class="f" d="M344 146 C360 172 368 188 368 202 A24 24 0 0 1 320 202 C320 188 328 172 344 146 Z" fill="var(--pf)"/>
+      <text x="318" y="252">1 г</text>
+    </svg>
+  </div>
+</section>
+
+<!-- 5. Ультрамарин -->
+<section class="slide story" style="--pig:#26358F" data-c="#26358F" aria-label="Ультрамарин">
+  <div class="text">
+    <h2>Ультрамарин</h2>
+    <p class="hook">Синій, розтертий із каменю</p>
+    <p>Його отримували з лазуриту, який добували в горах на території сучасного Афганістану, і везли до Європи через півсвіту.</p>
+    <dl class="plate">
+      <dt>Зразок</dt><dd>№ 2, Ultramarine</dd>
+      <dt>Період</dt><dd>VI–XIX ст.</dd>
+      <dt>Джерело</dt><dd>лазурит, Бадахшан</dd>
+      <dt>HEX</dt><dd><span class="sw"></span>#26358F <span class="note">цифровий орієнтир</span></dd>
+    </dl>
+  </div>
+  <div class="art-wrap">
+    <svg class="art" viewBox="0 0 400 400" aria-hidden="true">
+      <path class="s draw" d="M110 180 L165 108 L255 100 L312 162 L296 262 L214 314 L126 282 Z"/>
+      <path class="s draw" d="M165 150 L240 146 L270 200 L225 258 L160 242 L145 196 Z"/>
+      <path class="s thin draw" d="M110 180 L145 196 M165 108 L165 150 M255 100 L240 146 M312 162 L270 200 M296 262 L225 258 M214 314 L225 258 M126 282 L160 242"/>
+      <circle class="f" cx="196" cy="190" r="3" fill="#D8B35A"/>
+      <circle class="f" cx="232" cy="214" r="2" fill="#D8B35A"/>
+      <circle class="f" cx="180" cy="228" r="2.5" fill="#D8B35A"/>
+      <circle class="f" cx="262" cy="170" r="2" fill="#D8B35A"/>
+      <circle class="f" cx="150" cy="262" r="2" fill="#D8B35A"/>
+    </svg>
+  </div>
+</section>
+
+<!-- 6. Ультрамарин: факт -->
+<section class="slide fact" style="--pig:#26358F" data-c="#26358F" aria-label="Ультрамарин, факт">
+  <div class="text">
+    <h2>Дорожчий за золото</h2>
+    <p>Натуральний ультрамарин міг коштувати більше, ніж золото тієї ж ваги. Тому його часто берегли для найважливішого, зокрема для вбрання Діви Марії.</p>
+  </div>
+  <div class="art-wrap">
+    <svg class="art" viewBox="0 0 400 400" aria-hidden="true">
+      <circle class="s draw" cx="200" cy="92" r="7"/>
+      <path class="s draw" d="M200 99 V322 M138 322 H262"/>
+      <path class="s draw" d="M92 150 L308 108"/>
+      <path class="s thin draw" d="M92 150 L62 236 M92 150 L122 236 M308 108 L278 190 M308 108 L338 190"/>
+      <path class="s draw" d="M56 236 Q92 262 128 236 Z"/>
+      <path class="s draw" d="M272 190 Q308 216 344 190 Z"/>
+      <path class="f" d="M78 234 L88 218 L102 216 L110 228 L104 236 Z" fill="var(--pf)"/>
+      <ellipse class="s draw" cx="308" cy="184" rx="16" ry="5" style="stroke:var(--gold)"/>
+    </svg>
+  </div>
+</section>
+
+<!-- 7. Мумія коричнева -->
+<section class="slide story" style="--pig:#8F4B28" data-c="#8F4B28" aria-label="Мумієве коричневе">
+  <div class="text">
+    <h2>Мумієве коричневе</h2>
+    <p class="hook">Фарба з гробниць</p>
+    <p>Кілька століть європейські художники писали пігментом, до складу якого входив матеріал єгипетських мумій. Склад був неоднорідним, а під цією назвою продавали й замінники.</p>
+    <dl class="plate">
+      <dt>Зразок</dt><dd>№ 3, Mummy brown</dd>
+      <dt>Період</dt><dd>XVI–XX ст.</dd>
+      <dt>Джерело</dt><dd>подрібнені мумії, смоли</dd>
+      <dt>HEX</dt><dd><span class="sw"></span>#8F4B28 <span class="note">цифровий орієнтир</span></dd>
+    </dl>
+  </div>
+  <div class="art-wrap">
+    <svg class="art" viewBox="0 0 400 400" aria-hidden="true">
+      <path class="s draw" d="M200 46 C246 46 266 82 263 124 C261 150 250 166 252 186 L270 330 C272 356 245 372 200 372 C155 372 128 356 130 330 L148 186 C150 166 139 150 137 124 C134 82 154 46 200 46 Z"/>
+      <ellipse class="s draw" cx="200" cy="114" rx="27" ry="34"/>
+      <path class="s draw" d="M166 88 L150 172 M234 88 L250 172"/>
+      <path class="s draw" d="M162 202 L238 234 M238 202 L162 234"/>
+      <path class="s thin draw" d="M150 266 H250 M147 298 H253 M143 330 H257"/>
+      <path class="s thin draw" d="M188 108 H194 M206 108 H212 M195 132 Q200 136 205 132"/>
+    </svg>
+  </div>
+</section>
+
+<!-- 8. Мумія: поворот -->
+<section class="slide fact" style="--pig:#8F4B28" data-c="#8F4B28" aria-label="Мумієве коричневе, легенда">
+  <div class="text">
+    <h2>Похований тюбик</h2>
+    <p>За родинною згадкою, дізнавшись про походження фарби, англійський художник-прерафаеліт Едвард Берн-Джонс поховав свій тюбик у саду.</p>
+  </div>
+  <div class="art-wrap">
+    <svg class="art" viewBox="0 0 400 400" aria-hidden="true">
+      <path class="s draw" d="M30 250 H370"/>
+      <path class="s draw" d="M150 250 Q200 222 250 250"/>
+      <path class="s draw" d="M200 234 V196"/>
+      <path class="s draw" d="M200 208 Q180 190 166 196 Q180 216 200 208"/>
+      <path class="s draw" d="M200 200 Q222 180 236 188 Q222 208 200 200"/>
+      <path class="s draw" d="M104 296 L240 296 L262 306 L262 318 L240 328 L104 328 Z"/>
+      <rect class="s draw" x="262" y="303" width="18" height="18"/>
+      <path class="s thin draw" d="M112 296 V328 M120 296 V328"/>
+      <path class="f" d="M128 300 H236 V324 H128 Z" fill="var(--pf)" opacity=".85"/>
+      <path class="s thin draw" d="M50 272 l8 4 M90 282 l6 -5 M300 270 l7 5 M330 290 l-6 5 M60 350 l7 -4 M300 350 l8 3 M170 360 l6 4 M230 364 l-7 3"/>
+    </svg>
+  </div>
+</section>
+
+<!-- 9. Берлінська лазур -->
+<section class="slide story" style="--pig:#003153" data-c="#003153" aria-label="Пруська синь">
+  <div class="text">
+    <h2>Пруська синь</h2>
+    <p class="hook">Синій, отриманий випадково</p>
+    <p>Близько 1704–1706 років у Берліні намагалися отримати червону фарбу, а отримали синю. Її вважають першим сучасним синтетичним пігментом.</p>
+    <dl class="plate">
+      <dt>Зразок</dt><dd>№ 4, Prussian blue</dd>
+      <dt>Період</dt><dd>близько 1704–1706</dd>
+      <dt>Джерело</dt><dd>гексаціаноферат заліза</dd>
+      <dt>HEX</dt><dd><span class="sw"></span>#003153 <span class="note">цифровий орієнтир</span></dd>
+    </dl>
+  </div>
+  <div class="art-wrap">
+    <svg class="art" viewBox="0 0 400 400" aria-hidden="true">
+      <path class="f" d="M140 250 Q170 240 200 250 Q230 260 262 250 L290 304 Q300 328 270 332 H130 Q100 328 110 304 Z" fill="#F3EDE2" opacity=".22"/>
+      <path class="s draw" d="M166 66 H234 M178 66 V160 L110 304 Q100 328 130 332 H270 Q300 328 290 304 L222 160 V66"/>
+      <path class="s thin draw" d="M140 250 Q170 240 200 250 Q230 260 262 250"/>
+      <circle class="s thin draw" cx="186" cy="290" r="6"/>
+      <circle class="s thin draw" cx="222" cy="276" r="4"/>
+      <circle class="s thin draw" cx="206" cy="218" r="3"/>
+      <circle class="s thin draw" cx="196" cy="186" r="2.5"/>
+    </svg>
+  </div>
+</section>
+
+<!-- 10. Лазур: спадщина -->
+<section class="slide fact" style="--pig:#003153" data-c="#003153" aria-label="Пруська синь, спадщина">
+  <div class="text">
+    <h2>Від «Хвилі» до креслень</h2>
+    <p>Пруська синь дала глибину воді у «Великій хвилі» Хокусая.</p>
+    <p class="aside">А з 1842 року завдяки ціанотипії Джона Гершеля нею друкували креслення. Звідси англійське blueprint.</p>
+  </div>
+  <div class="art-wrap">
+    <svg class="art" viewBox="0 0 400 400" aria-hidden="true">
+      <path class="s thin draw" d="M40 80 H360 M40 140 H360 M40 200 H360 M40 260 H360 M40 320 H360 M80 60 V340 M160 60 V340 M240 60 V340 M320 60 V340"/>
+      <path class="s draw" d="M40 290 C100 290 118 212 176 180 C226 152 282 162 294 204 C301 230 274 246 256 230 C244 218 254 200 270 206"/>
+      <path class="s draw" d="M40 322 C120 300 200 334 360 300"/>
+      <path class="s draw" d="M176 180 C188 196 206 206 226 204"/>
+      <path class="s thin draw" d="M60 362 H340 M60 356 V368 M340 356 V368"/>
+      <text x="186" y="384">280</text>
+    </svg>
+  </div>
+</section>
+
+<!-- 11. Паризька зелень -->
+<section class="slide story light-pig" style="--pig:#50C878" data-c="#50C878" aria-label="Паризька зелень">
+  <div class="text">
+    <h2>Паризька зелень</h2>
+    <p class="hook">Мода з миш'яком</p>
+    <p>У 1814 році з'явився яскравий зелений пігмент, що містив миш'як. Його використовували у фарбах і шпалерах, хоча сполука була токсичною.</p>
+    <dl class="plate">
+      <dt>Зразок</dt><dd>№ 5, Paris green</dd>
+      <dt>Рік</dt><dd>1814</dd>
+      <dt>Джерело</dt><dd>ацетоарсеніт міді</dd>
+      <dt>HEX</dt><dd><span class="sw"></span>#50C878 <span class="note">цифровий орієнтир</span></dd>
+    </dl>
+  </div>
+  <div class="art-wrap">
+    <svg class="art" viewBox="0 0 400 400" aria-hidden="true">
+      <path class="s draw" d="M200 50 L350 200 L200 350 L50 200 Z"/>
+      <path class="s draw" d="M200 112 C244 156 244 244 200 288 C156 244 156 156 200 112 Z"/>
+      <path class="s thin draw" d="M200 126 V274"/>
+      <path class="s thin draw" d="M200 170 L180 152 M200 200 L176 184 M200 230 L180 216 M200 170 L220 152 M200 200 L224 184 M200 230 L220 216"/>
+      <path class="s draw" d="M150 200 C120 190 112 164 132 156 C148 150 154 170 142 176"/>
+      <path class="s draw" d="M250 200 C280 190 288 164 268 156 C252 150 246 170 258 176"/>
+      <circle class="s draw" cx="200" cy="80" r="5"/><circle class="s draw" cx="200" cy="320" r="5"/>
+      <circle class="s draw" cx="80" cy="200" r="5"/><circle class="s draw" cx="320" cy="200" r="5"/>
+    </svg>
+  </div>
+</section>
+
+<!-- 12. Зелень: ціна -->
+<section class="slide fact" style="--pig:#50C878; --pk:62%" data-c="#50C878" aria-label="Паризька зелень, гіпотеза">
+  <div class="text">
+    <h2>Шпалери Наполеона</h2>
+    <p>Шпалери з миш'яковими пігментами стали однією з гіпотез у дискусії про отруєння Наполеона на острові Святої Єлени. Причиною його смерті це не встановлено.</p>
+  </div>
+  <div class="art-wrap">
+    <svg class="art" viewBox="0 0 400 400" aria-hidden="true">
+      <path class="s draw" d="M52 252 C116 170 166 148 200 148 C234 148 284 170 348 252 C304 236 252 228 200 228 C148 228 96 236 52 252 Z"/>
+      <path class="s thin draw" d="M76 242 C148 220 252 220 324 242"/>
+      <circle class="s draw" cx="200" cy="186" r="13"/>
+      <circle class="f" cx="200" cy="186" r="6" fill="var(--pf)"/>
+      <path class="s thin draw" d="M92 300 Q110 286 128 300 T164 300 T200 300 T236 300 T272 300 T308 300"/>
+      <path class="s thin draw" d="M92 324 Q110 310 128 324 T164 324 T200 324 T236 324 T272 324 T308 324"/>
+    </svg>
+  </div>
+</section>
+
+<!-- 13. Мовеїн -->
+<section class="slide story" style="--pig:#8D4585" data-c="#8D4585" aria-label="Мовеїн">
+  <div class="text">
+    <h2>Мовеїн</h2>
+    <p class="hook">Помилка, що змінила моду</p>
+    <p>У 1856 році 18-річний Вільям Генрі Перкін намагався синтезувати хінін від малярії. Натомість він відкрив перший комерціалізований синтетичний барвник.</p>
+    <dl class="plate">
+      <dt>Зразок</dt><dd>№ 6, Mauveine</dd>
+      <dt>Рік</dt><dd>1856, Лондон</dd>
+      <dt>Джерело</dt><dd>анілін із кам'яновугільної смоли</dd>
+      <dt>HEX</dt><dd><span class="sw"></span>#8D4585 <span class="note">цифровий орієнтир</span></dd>
+    </dl>
+  </div>
+  <div class="art-wrap">
+    <svg class="art" viewBox="0 0 400 400" aria-hidden="true">
+      <path class="f" d="M112 222 H158 V296 A23 23 0 0 1 112 296 Z" fill="#F3EDE2" opacity=".25"/>
+      <path class="s draw" d="M100 70 H170 M110 70 V296 A25 25 0 0 0 160 296 V70"/>
+      <path class="s thin draw" d="M112 222 H158"/>
+      <path class="s draw" d="M250 118 L284.6 138 L284.6 178 L250 198 L215.4 178 L215.4 138 Z"/>
+      <path class="s draw" d="M284.6 178 L319.2 198 L319.2 238 L284.6 258 L250 238 L250 198"/>
+      <circle class="s thin draw" cx="250" cy="158" r="22"/>
+      <path class="s thin draw" d="M319.2 198 L346 184 M284.6 258 L284.6 290 M215.4 138 L190 124"/>
+      <text x="280" y="306">NH₂</text>
+    </svg>
+  </div>
+</section>
+
+<!-- 14. Мовеїн: переворот -->
+<section class="slide fact" style="--pig:#8D4585" data-c="#8D4585" aria-label="Мовеїн, переворот">
+  <div class="text">
+    <h2>Колір для багатьох</h2>
+    <p>Фіолетовий, колись знак влади, став модою. За мовеїном прийшли десятки нових синтетичних барвників.</p>
+    <p class="coda">Відтепер колір не лише знаходили в природі. Його створювали.</p>
+  </div>
+  <div class="art-wrap">
+    <svg class="art" viewBox="0 0 400 400" aria-hidden="true">
+      <path class="s draw" d="M170 112 L175 74 L190 94 L200 66 L210 94 L225 74 L230 112 Z"/>
+      <g id="spools"></g>
+      <path class="s thin draw" d="M60 320 H340"/>
+    </svg>
+  </div>
+</section>
+
+<!-- 15. Vantablack -->
+<section class="slide story void" style="--pig:#000000" data-c="#000000" aria-label="Vantablack">
+  <div class="text">
+    <h2>Vantablack</h2>
+    <p class="hook">Чорний, що поглинає світло</p>
+    <p>Покриття з вертикально вирощених вуглецевих нанотрубок представили у 2014 році. Воно поглинало 99,965 % світла, і об'ємні предмети в ньому здавалися пласкими.</p>
+    <dl class="plate">
+      <dt>Зразок</dt><dd>№ 7, Vantablack</dd>
+      <dt>Рік</dt><dd>2014, Surrey NanoSystems</dd>
+      <dt>Джерело</dt><dd>вуглецеві нанотрубки</dd>
+      <dt>HEX</dt><dd><span class="sw"></span>#000000 <span class="note">цифровий орієнтир</span></dd>
+    </dl>
+  </div>
+  <div class="art-wrap">
+    <svg class="art" viewBox="0 0 400 400" aria-hidden="true">
+      <circle class="s draw" cx="118" cy="200" r="72"/>
+      <ellipse class="s thin draw" cx="118" cy="200" rx="72" ry="24"/>
+      <ellipse class="s thin draw" cx="118" cy="200" rx="30" ry="72"/>
+      <ellipse class="s thin draw" cx="118" cy="200" rx="56" ry="72"/>
+      <path class="s thin draw" d="M60 244 Q118 290 176 244"/>
+      <circle class="s thin draw" cx="286" cy="200" r="72"/>
+      <circle class="f" cx="286" cy="200" r="71" fill="#000"/>
+      <text x="92" y="306">до</text><text x="256" y="306">після</text>
+    </svg>
+  </div>
+</section>
+
+<!-- 16. Vantablack: скандал -->
+<section class="slide fact" style="--pig:#000000" data-c="#000000" aria-label="Vantablack, скандал">
+  <div class="text">
+    <h2>Ексклюзив на чорний</h2>
+    <p>У 2016 році Аніш Капур отримав ексклюзивні права на художнє використання Vantablack за домовленістю з виробником.</p>
+    <p class="aside">У відповідь художник Стюарт Семпл випустив «найрожевіший рожевий», який могли купити всі, крім Капура.</p>
+  </div>
+  <div class="art-wrap">
+    <svg class="art" viewBox="0 0 400 400" aria-hidden="true">
+      <path class="f" d="M70 236 L200 236 L222 246 L222 262 L200 272 L70 272 Z" fill="var(--pf)"/>
+      <path class="s draw" d="M70 236 L200 236 L222 246 L222 262 L200 272 L70 272 Z"/>
+      <rect class="s draw" x="222" y="244" width="18" height="20"/>
+      <path class="s thin draw" d="M78 236 V272 M86 236 V272"/>
+      <path class="s draw" d="M118 204 V178 A22 22 0 0 1 162 178 V204"/>
+      <rect class="s draw" x="106" y="204" width="68" height="52"/>
+      <path class="f" d="M106 204 H174 V256 H106 Z" fill="var(--paper)"/>
+      <rect class="s draw" x="106" y="204" width="68" height="52"/>
+      <circle class="s draw" cx="140" cy="226" r="6"/>
+      <path class="s draw" d="M140 232 V244"/>
+      <path class="f" d="M262 150 C300 120 352 132 354 176 C356 214 318 214 300 236 C284 256 250 250 246 222 C242 196 238 170 262 150 Z" fill="#F2559B"/>
+      <path class="s thin draw" d="M262 150 C300 120 352 132 354 176 C356 214 318 214 300 236 C284 256 250 250 246 222 C242 196 238 170 262 150 Z" style="stroke:#F2559B"/>
+    </svg>
+  </div>
+</section>
+
+<!-- 17. YInMn Blue -->
+<section class="slide story" style="--pig:#2E5090" data-c="#2E5090" aria-label="YInMn Blue">
+  <div class="text">
+    <h2>YInMn Blue</h2>
+    <p class="hook">Новий синій після двох століть</p>
+    <p>У 2009 році команда Маса Субраманіана в Університеті штату Орегон досліджувала матеріали для електроніки і випадково отримала яскраво-синю сполуку.</p>
+    <dl class="plate">
+      <dt>Зразок</dt><dd>№ 8, YInMn Blue</dd>
+      <dt>Рік</dt><dd>2009, Орегон, США</dd>
+      <dt>Джерело</dt><dd>оксиди ітрію, індію, марганцю</dd>
+      <dt>HEX</dt><dd><span class="sw"></span>#2E5090 <span class="note">цифровий орієнтир</span></dd>
+    </dl>
+  </div>
+  <div class="art-wrap">
+    <svg class="art" viewBox="0 0 400 400" aria-hidden="true">
+      <path class="s draw" d="M120 160 H240 V280 H120 Z"/>
+      <path class="s draw" d="M180 100 H300 V220 H180 Z"/>
+      <path class="s draw" d="M120 160 L180 100 M240 160 L300 100 M240 280 L300 220 M120 280 L180 220"/>
+      <path class="s thin draw" d="M180 160 L240 100 M180 280 L240 220 M120 220 L180 160 M240 220 L300 160 M150 190 L270 190 M210 130 L210 250"/>
+      <g fill="#F3EDE2">
+        <circle class="f" cx="120" cy="160" r="6"/><circle class="f" cx="240" cy="160" r="6"/>
+        <circle class="f" cx="240" cy="280" r="6"/><circle class="f" cx="120" cy="280" r="6"/>
+        <circle class="f" cx="180" cy="100" r="6"/><circle class="f" cx="300" cy="100" r="6"/>
+        <circle class="f" cx="300" cy="220" r="6"/><circle class="f" cx="180" cy="220" r="6"/>
+        <circle class="f" cx="210" cy="190" r="9"/>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<!-- 18. YInMn: властивість -->
+<section class="slide fact" style="--pig:#2E5090" data-c="#2E5090" aria-label="YInMn Blue, властивість">
+  <div class="text">
+    <h2>Синій, що відбиває тепло</h2>
+    <p>Він відбиває ближнє інфрачервоне випромінювання, тож покриття з ним можуть менше нагріватися.</p>
+    <p class="aside">У 2017 році він надихнув Crayola на олівець Bluetiful.</p>
+  </div>
+  <div class="art-wrap">
+    <svg class="art" viewBox="0 0 400 400" aria-hidden="true">
+      <circle class="s draw" cx="80" cy="80" r="26"/>
+      <path class="s thin draw" d="M80 38 V26 M80 122 V134 M38 80 H26 M122 80 H134 M50 50 L42 42 M110 50 L118 42 M50 110 L42 118"/>
+      <path class="s draw" d="M112 112 L196 196"/>
+      <path class="s draw" d="M196 196 L292 100 M280 100 H292 V112"/>
+      <path class="s thin draw" d="M130 150 L206 226 M206 226 L310 122"/>
+      <path class="f" d="M110 250 L220 176 L330 250 Z" fill="var(--pf)"/>
+      <path class="s draw" d="M96 260 L220 176 L344 260"/>
+      <path class="s draw" d="M126 250 V340 H314 V250"/>
+      <rect class="s draw" x="198" y="286" width="44" height="54"/>
+      <rect class="s thin draw" x="146" y="276" width="32" height="28"/>
+      <rect class="s thin draw" x="262" y="276" width="32" height="28"/>
+    </svg>
+  </div>
+</section>
+
+<!-- 19. Фінал -->
+<section class="slide neutral center" data-c="var(--ink)" aria-label="Фінал">
+  <div class="text">
+    <p class="lead">Колір ніколи не був просто кольором.</p>
+    <p>За ним стояли рідкісні матеріали, великі гроші, небезпечна хімія, а згодом наука й технології.</p>
+    <p class="coda">Історія кольору ще не закінчилася.</p>
+    <p class="hint">Дизайн і верстка — Anya Park<br>@byanya.design · anya.park1607@gmail.com</p>
+  </div>
+  <div class="art-wrap">
+    <svg class="art" viewBox="0 0 400 400" aria-hidden="true">
+      <path class="s draw" d="M30 200 H370"/>
+      <g id="timeline"></g>
+    </svg>
+  </div>
+</section>
+
+</main>
+
+<footer class="bottom">
+  <div class="bar" id="bar" aria-label="Слайди"></div>
+  <div class="nav">
+    <button id="prev" aria-label="Попередній слайд">‹</button>
+    <button id="next" aria-label="Наступний слайд">›</button>
+    <button id="fs" aria-label="На весь екран" title="На весь екран (F)">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path class="fs-open" d="M1 5V1h4M11 1h4v4M15 11v4h-4M5 15H1v-4"/><path class="fs-close" d="M5 1v4H1M15 5h-4V1M11 15v-4h4M1 11h4v4"/></svg>
+    </button>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs){ var e=document.createElementNS(NS,tag); for(var k in attrs) e.setAttribute(k,attrs[k]); return e; }
+
+  // 10 x 10 grid of snails (slide 4)
+  var g = document.getElementById("dotgrid");
+  for(var r=0;r<10;r++) for(var c=0;c<10;c++){
+    g.appendChild(el("circle",{cx:56+c*20, cy:90+r*20, r:3.2, "class":"s thin draw"}));
+  }
+
+  // spools (slide 14)
+  var sp = document.getElementById("spools");
+  [90,145,200,255,310].forEach(function(x,i){
+    sp.appendChild(el("rect",{x:x-20,y:170,width:40,height:140,"class":"f",fill:"var(--pf)",opacity:(0.35+i*0.12).toFixed(2)}));
+    sp.appendChild(el("path",{d:"M"+(x-26)+" 164 H"+(x+26)+" M"+(x-26)+" 316 H"+(x+26)+" M"+(x-20)+" 170 V310 M"+(x+20)+" 170 V310","class":"s draw"}));
+  });
+
+  // timeline (slide 19)
+  var tl = document.getElementById("timeline");
+  var pts = [["#66023C","давнина"],["#26358F","VI ст."],["#8F4B28","XVI ст."],["#003153","≈1705"],["#50C878","1814"],["#8D4585","1856"],["#2E5090","2009"],["#000000","2014"]];
+  pts.forEach(function(p,i){
+    var x = 50 + i*42.8, up = i%2===0;
+    tl.appendChild(el("path",{d:"M"+x+" 200 V"+(up?150:250),"class":"s thin draw"}));
+    tl.appendChild(el("circle",{cx:x,cy:up?140:260,r:11,fill:p[0],"class":"f"}));
+    var t = el("text",{x:x,y:up?112:296,"text-anchor":"middle"}); t.textContent=p[1]; tl.appendChild(t);
+  });
+
+  // normalise drawable lines
+  document.querySelectorAll(".art .draw").forEach(function(n){ n.setAttribute("pathLength","1"); });
+
+  var slides = Array.prototype.slice.call(document.querySelectorAll(".slide"));
+  var bar = document.getElementById("bar"), count = document.getElementById("count");
+  var prev = document.getElementById("prev"), next = document.getElementById("next");
+  var cur = -1, N = slides.length;
+
+  slides.forEach(function(s,i){
+    var b = document.createElement("button");
+    b.style.setProperty("--c", s.getAttribute("data-c"));
+    b.setAttribute("aria-label","Слайд "+(i+1));
+    b.addEventListener("click",function(){ go(i); });
+    bar.appendChild(b);
+  });
+  var segs = bar.children;
+
+  function pad(n){ return (n<10?"0":"")+n; }
+  function go(i){
+    i = Math.max(0, Math.min(N-1, i));
+    if(i===cur) return;
+    if(cur>=0) slides[cur].classList.remove("active");
+    cur = i;
+    var s = slides[cur];
+    s.classList.add("active");
+    s.scrollTop = 0;
+    document.documentElement.style.setProperty("--chrome", getComputedStyle(s).color);
+    count.textContent = pad(cur+1)+" / "+N;
+    for(var k=0;k<N;k++){ segs[k].classList.toggle("done", k<=cur); segs[k].classList.toggle("cur", k===cur); }
+    prev.disabled = cur===0; next.disabled = cur===N-1;
+    try{ history.replaceState(null,"","#"+(cur+1)); }catch(e){}
+  }
+
+  prev.addEventListener("click",function(){ go(cur-1); });
+  next.addEventListener("click",function(){ go(cur+1); });
+  document.addEventListener("keydown",function(e){
+    if(["ArrowRight","PageDown"," ","Enter"].indexOf(e.key)>-1 && e.target.tagName!=="BUTTON"){ e.preventDefault(); go(cur+1); }
+    else if(e.key==="ArrowRight"||e.key==="PageDown"){ e.preventDefault(); go(cur+1); }
+    else if(e.key==="ArrowLeft"||e.key==="PageUp"){ e.preventDefault(); go(cur-1); }
+    else if(e.key==="Home") go(0);
+    else if(e.key==="End") go(N-1);
+  });
+  var sx=null, sy=null;
+  document.addEventListener("touchstart",function(e){ sx=e.touches[0].clientX; sy=e.touches[0].clientY; },{passive:true});
+  document.addEventListener("touchend",function(e){
+    if(sx===null) return;
+    var dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy;
+    if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)) go(cur+(dx<0?1:-1));
+    sx=null;
+  },{passive:true});
+
+  // fullscreen
+  var fsBtn = document.getElementById("fs"), root = document.documentElement;
+  var canFs = !!(root.requestFullscreen || root.webkitRequestFullscreen) && (document.fullscreenEnabled || document.webkitFullscreenEnabled);
+  if(!canFs){ fsBtn.style.display="none"; }
+  function isFs(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+  function toggleFs(){
+    if(!canFs) return;
+    try{
+      if(isFs()){ (document.exitFullscreen||document.webkitExitFullscreen).call(document); }
+      else { var r=(root.requestFullscreen||root.webkitRequestFullscreen).call(root); if(r&&r.catch) r.catch(function(){}); }
+    }catch(e){}
+  }
+  function syncFs(){
+    var on=isFs(); root.classList.toggle("is-fs",on);
+    fsBtn.setAttribute("aria-label", on ? "Вийти з повноекранного режиму" : "На весь екран");
+    fsBtn.title = on ? "Вийти з повноекранного режиму (F)" : "На весь екран (F)";
+  }
+  fsBtn.addEventListener("click",toggleFs);
+  document.addEventListener("fullscreenchange",syncFs);
+  document.addEventListener("webkitfullscreenchange",syncFs);
+  document.addEventListener("keydown",function(e){ if((e.key==="f"||e.key==="F"||e.key==="а"||e.key==="А") && !e.ctrlKey && !e.metaKey && !e.altKey){ toggleFs(); } });
+
+  var start = parseInt((location.hash||"").slice(1),10);
+  requestAnimationFrame(function(){ go(isNaN(start)?0:start-1); });
+})();
+</script>
+</body>
+</html>
